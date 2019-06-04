@@ -7,11 +7,13 @@ import keypirinha_net as kpnet
 import json
 import os
 import collections
+import time
 
 GAME_LAUNCH_URL = "com.epicgames.launcher://apps/{}?action=launch&silent=true"
 ALL_USERS_PATH = "c:\\ProgramData\\Epic\\"
 
-InstalledApp = collections.namedtuple('InstalledApp', ['InstallLocation', 'AppName', 'AppID', 'AppVersion'])
+InstalledApp = collections.namedtuple('InstalledApp',
+                                      ['InstallLocation', 'AppName', 'AppID', 'AppVersion', 'Icon'])
 
 
 class EpicLauncher(kp.Plugin):
@@ -32,6 +34,14 @@ class EpicLauncher(kp.Plugin):
     def on_catalog(self):
         applist = self.get_applist()
 
+        start_time = time.time()
+
+        target = GAME_LAUNCH_URL.split(":")[0]
+
+        command, icon = kpu.shell_url_scheme_to_command(target)
+        default_icon_handle = self.load_icon("@{}".format(icon))
+        self.set_default_icon(default_icon_handle)
+
         items = [
             self.create_item(
                 category=self.CATEGORY,
@@ -43,6 +53,10 @@ class EpicLauncher(kp.Plugin):
             for app in applist]
 
         self.set_catalog(items)
+
+        elapsed = time.time() - start_time
+        stat_msg = "Cataloged {} games in {:0.1f} seconds"
+        self.info(stat_msg.format(len(items), elapsed))
 
     def on_suggest(self, user_input, items_chain):
         pass
@@ -73,10 +87,11 @@ class EpicLauncher(kp.Plugin):
             installed = json.load(data_file)
 
         for entry in installed["InstallationList"]:
-            if entry["AppName"].startswith("UE_"):
+            appname = entry["AppName"]
+            if appname.startswith("UE_"):
                 continue
 
-            app = InstalledApp(entry["InstallLocation"], entry["AppName"], entry["AppID"], entry["AppVersion"])
+            app = InstalledApp(entry["InstallLocation"], appname, entry["AppID"], entry["AppVersion"], None)
             results.append(app)
 
         return results
