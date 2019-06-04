@@ -9,7 +9,7 @@ import os
 import collections
 
 GAME_LAUNCH_URL = "com.epicgames.launcher://apps/{}?action=launch&silent=true"
-ALL_USERS_PATH = "c:\\Users\\All Users\\Epic\\"
+ALL_USERS_PATH = "c:\\ProgramData\\Epic\\"
 
 InstalledApp = collections.namedtuple('InstalledApp', ['InstallLocation', 'AppName', 'AppID', 'AppVersion'])
 
@@ -72,9 +72,11 @@ class EpicLauncher(kp.Plugin):
         with open(install_path, "r") as data_file:
             installed = json.load(data_file)
 
-        for entry in installed.InstallationList:
-            app = InstalledApp(entry.InstallLocation, entry.AppName, entry.AppID, entry.AppVersion)
+        for entry in installed["InstallationList"]:
+            if entry["AppName"].startswith("UE_"):
+                continue
 
+            app = InstalledApp(entry["InstallLocation"], entry["AppName"], entry["AppID"], entry["AppVersion"])
             results.append(app)
 
         return results
