@@ -20,7 +20,7 @@ class EpicLauncher(kp.Plugin):
     """
     Add installed Epic Games Launcher games to the Keypirinha Catalog.
 
-    Version: 0.1
+    Version: 1.0
     """
 
     CATEGORY = kp.ItemCategory.USER_BASE + 1
