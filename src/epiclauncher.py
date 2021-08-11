@@ -9,8 +9,10 @@ import os
 import collections
 import time
 
+from glob import glob
+
 GAME_LAUNCH_URL = "com.epicgames.launcher://apps/{}?action=launch&silent=true"
-ALL_USERS_PATH = "c:\\ProgramData\\Epic\\"
+ALL_USERS_PATH = "C:\\ProgramData\\Epic\\EpicGamesLauncher\\Data\\Manifests"
 
 InstalledApp = collections.namedtuple('InstalledApp',
                                       ['InstallLocation', 'AppName', 'AppID', 'AppVersion', 'Icon'])
@@ -46,7 +48,7 @@ class EpicLauncher(kp.Plugin):
             self.create_item(
                 category=self.CATEGORY,
                 label=app.AppName,
-                target=app.AppName,
+                target=app.AppID,
                 short_desc="Launch game",
                 args_hint=kp.ItemArgsHint.ACCEPTED,
                 hit_hint=kp.ItemHitHint.KEEPALL)
@@ -77,21 +79,20 @@ class EpicLauncher(kp.Plugin):
 
     def get_applist(self):
         results = []
-
-        install_path = os.path.join(ALL_USERS_PATH, "UnrealEngineLauncher", "LauncherInstalled.dat")
-        if not os.path.exists(install_path) or not os.path.isfile(install_path):
+        
+        if not os.path.exists(ALL_USERS_PATH):
             self.warn("No launcher data found")
             return results
 
-        with open(install_path, "r") as data_file:
-            installed = json.load(data_file)
+        for file_path in glob(ALL_USERS_PATH + '\\*.item'):
+            item_file = open(file_path, 'r')
+            installed = json.load(item_file)
 
-        for entry in installed["InstallationList"]:
-            appname = entry["AppName"]
+            appname = installed["AppName"]
             if appname.startswith("UE_"):
                 continue
 
-            app = InstalledApp(entry["InstallLocation"], appname, entry["AppID"], entry["AppVersion"], None)
+            app = InstalledApp(installed["InstallLocation"], installed["DisplayName"], installed["AppName"], installed["AppVersionString"], None)
             results.append(app)
 
         return results
